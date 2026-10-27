@@ -40,8 +40,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display font-black text-lg sm:text-xl tracking-wider text-white">
-                DRAIN <span className="text-cyan-400">PULSE</span>
+              <h1 className="font-display font-black text-lg sm:text-xl tracking-wider text-white flex items-baseline gap-1.5">
+                <span>DRAIN <span className="text-cyan-400">PULSE</span></span>
+                <span className="text-[11px] font-mono font-medium text-slate-400 tracking-normal hidden sm:inline">MONITORING SYSTEM</span>
               </h1>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-500/30">
                 v2.4 ESP32
