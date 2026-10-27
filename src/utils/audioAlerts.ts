@@ -1,6 +1,6 @@
 /**
  * Audio Alerts Engine using Web Audio API
- * Synthesizes tactical alarm tones and sonar pings without external sound assets
+ * Synthesizes tactical alarm tones and sonar pings safely
  */
 
 class AudioAlertsEngine {
@@ -11,16 +11,20 @@ class AudioAlertsEngine {
   private alarmInterval: number | null = null;
 
   private initCtx() {
-    if (!this.audioCtx) {
-      const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtxClass) {
-        this.audioCtx = new AudioCtxClass();
+    try {
+      if (!this.audioCtx) {
+        const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AudioCtxClass) {
+          this.audioCtx = new AudioCtxClass();
+        }
       }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
+      return this.audioCtx;
+    } catch {
+      return null;
     }
-    if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
-    }
-    return this.audioCtx;
   }
 
   // Tactical click for UI controls
@@ -28,7 +32,7 @@ class AudioAlertsEngine {
     if (this.isMuted) return;
     try {
       const ctx = this.initCtx();
-      if (!ctx) return;
+      if (!ctx || ctx.state === 'suspended') return;
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -55,7 +59,7 @@ class AudioAlertsEngine {
     if (this.isMuted) return;
     try {
       const ctx = this.initCtx();
-      if (!ctx) return;
+      if (!ctx || ctx.state === 'suspended') return;
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -85,7 +89,7 @@ class AudioAlertsEngine {
     if (this.isMuted) return;
     try {
       const ctx = this.initCtx();
-      if (!ctx) return;
+      if (!ctx || ctx.state === 'suspended') return;
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -112,32 +116,36 @@ class AudioAlertsEngine {
     if (this.isMuted || this.alarmInterval !== null) return;
     try {
       const ctx = this.initCtx();
-      if (!ctx) return;
+      if (!ctx || ctx.state === 'suspended') return;
 
       let state = false;
       const playPulse = () => {
         if (this.isMuted) return;
-        const c = this.initCtx();
-        if (!c) return;
+        try {
+          const c = this.initCtx();
+          if (!c || c.state === 'suspended') return;
 
-        const osc = c.createOscillator();
-        const gain = c.createGain();
+          const osc = c.createOscillator();
+          const gain = c.createGain();
 
-        state = !state;
-        const freq = state ? 1100 : 850;
+          state = !state;
+          const freq = state ? 1100 : 850;
 
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(freq, c.currentTime);
-        osc.frequency.linearRampToValueAtTime(freq + 150, c.currentTime + 0.2);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, c.currentTime);
+          osc.frequency.linearRampToValueAtTime(freq + 150, c.currentTime + 0.2);
 
-        gain.gain.setValueAtTime(0.3, c.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, c.currentTime + 0.22);
+          gain.gain.setValueAtTime(0.3, c.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, c.currentTime + 0.22);
 
-        osc.connect(gain);
-        gain.connect(c.destination);
+          osc.connect(gain);
+          gain.connect(c.destination);
 
-        osc.start();
-        osc.stop(c.currentTime + 0.23);
+          osc.start();
+          osc.stop(c.currentTime + 0.23);
+        } catch {
+          // ignore
+        }
       };
 
       playPulse();

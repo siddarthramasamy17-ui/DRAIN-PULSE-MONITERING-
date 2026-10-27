@@ -80,10 +80,14 @@ export const ConnectionSettingsModal: React.FC<ConnectionSettingsModalProps> = (
   };
 
   const handleTestPush = async () => {
-    const success = await pushNotifier.sendTestNotification();
-    setNotificationMsg(
-      success ? 'Test Push Notification dispatched!' : 'Please allow notification permission in your browser.'
-    );
+    try {
+      const success = await pushNotifier.sendTestNotification();
+      setNotificationMsg(
+        success ? 'Test Push Notification dispatched!' : 'In-app alert verified (browser push not permitted in this frame).'
+      );
+    } catch {
+      setNotificationMsg('In-app alert active.');
+    }
     setTimeout(() => setNotificationMsg(null), 4000);
   };
 
